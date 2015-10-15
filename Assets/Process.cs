@@ -58,7 +58,7 @@ public class Process
 
 	public bool ioReady()
 	{
-		if(duration == ioTimer)
+		if(durationCounter == waitingTime)
 			return true;
 		return false;
 	}

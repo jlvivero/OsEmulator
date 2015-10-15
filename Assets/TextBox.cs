@@ -61,12 +61,13 @@ public class TextBox : MonoBehaviour
 				textBox = "" + seconds;
 				if(roundRobin)
 				{
-					if(quantumReset)
-					{
-						rrCounter++;
-						print(rrCounter);
-					}
-					if(rrCounter >= quantum)
+                    if(quantumReset)
+                    {
+					    rrCounter++;
+					    print(rrCounter);
+                    }
+
+					if(rrCounter > quantum)
 					{
 						GameObject.Find("manager").GetComponent<ProcessManager>().quantumTick(seconds);
 					}
@@ -152,7 +153,7 @@ public class TextBox : MonoBehaviour
 
 	public void startQuantum()
 	{
-		quantumReset = true;
+        quantumReset = true;
 		rrCounter = 0;
 		print("quantum should start counting");
 	}
@@ -226,6 +227,8 @@ public class TextBox : MonoBehaviour
         counter = 0;
         textBox = "0";
         totalProcess = 1;
+        rrCounter = 0;
+        quantumReset = false;
         GameObject.Find("manager").GetComponent<ProcessManager>().thetaProtocol();
     }
 }

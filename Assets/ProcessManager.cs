@@ -219,6 +219,7 @@ public class ProcessManager : MonoBehaviour
 			if(inProcess.Count == 0)
 			{
 				inProcess.Enqueue(readyQueue.Dequeue());
+                GameObject.Find("Tick&Quantum").GetComponent<TextBox>().startQuantum();
 			}
 		}
     }
@@ -375,5 +376,7 @@ public class ProcessManager : MonoBehaviour
         done.Clear();
         inIO.Clear();
         update = true;
+        canMove = true;
+        actualTime = 0;
     }
 }

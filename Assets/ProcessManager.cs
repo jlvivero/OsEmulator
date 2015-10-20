@@ -297,7 +297,7 @@ public class ProcessManager : MonoBehaviour
             if(iterator.isFinished())
             {
                 systemTimeText.text = systemTimeText.text + iterator.TotalTime() + "\n";
-                waitingTimeText.text = waitingText.text + (iterator.TotalTime() - (iterator.ioCounter + iterator.durationCounter)) + "\n";
+                waitingTimeText.text = waitingTimeText.text + (iterator.TotalTime() - (iterator.ioCounter + iterator.durationCounter)) + "\n";
             }
             else
             {

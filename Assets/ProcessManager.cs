@@ -149,7 +149,7 @@ public class ProcessManager : MonoBehaviour
 					canMove = false;
                 if(isReadyFull())
                 {
-                    inProcess.Peek().error();
+                    inIO.Peek().error();
                     done.Enqueue(inIO.Dequeue());
                 }
                 else

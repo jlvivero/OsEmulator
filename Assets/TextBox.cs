@@ -8,7 +8,7 @@ public class TextBox : MonoBehaviour
 	private int seconds = 0;
 	private int counter = 0;
 	private int max = 100; // time it takes for the counter to start ticking
-	private bool pause = false;
+	private bool pause = true;
 	private int percentage = 100;
 	private int totalProcess = 1; //number of processes created
 	private int quantum;
@@ -24,10 +24,17 @@ public class TextBox : MonoBehaviour
 	public int length;
 	public int width;
 
+    //memory part
+    private int memorySize = 32;
+    private int pageSize = 4;
+    private bool stopped = true;
+    private GameObject manager;
+
 
 	// Use this for initialization
 	void Start ()
 	{
+        manager = GameObject.Find("manager");
 		duration = 10;
 		quantum = 10;
 		ioTimer = 5;
@@ -69,21 +76,27 @@ public class TextBox : MonoBehaviour
 
 					if(rrCounter > quantum)
 					{
-						GameObject.Find("manager").GetComponent<ProcessManager>().quantumTick(seconds);
+						manager.GetComponent<ProcessManager>().quantumTick(seconds);
 					}
 					else
 					{
-						GameObject.Find("manager").GetComponent<ProcessManager>().tick(seconds);
+						manager.GetComponent<ProcessManager>().tick(seconds);
 					}
 				}
 				else
 				{
-					GameObject.Find("manager").GetComponent<ProcessManager>().tick(seconds);
+					manager.GetComponent<ProcessManager>().tick(seconds);
 				}
 
 				if(randomCreate(percentage))
 				{
-					GameObject.Find("manager").GetComponent<ProcessManager>().createNewProcess(calculateDuration(duration),totalProcess,ioTimer,calculateWaitingTime(duration),seconds);
+                    memorySize = ((Func<int>)(() => {
+                            System.Random rnd = new System.Random();
+                            int dice = rnd.Next(16,257);
+                            return dice;
+                        }))();
+                    manager.GetComponent<ProcessManager>().createNewProcessm(totalProcess,memorySize);
+					manager.GetComponent<ProcessManager>().createNewProcess(calculateDuration(duration),totalProcess,ioTimer,calculateWaitingTime(duration),seconds);
 					totalProcess++;
 				}
 			}
@@ -207,6 +220,7 @@ public class TextBox : MonoBehaviour
     public void pressPlay()
     {
         pause = false;
+        stopped = false;
     }
 
     public void pressPause()
@@ -222,6 +236,7 @@ public class TextBox : MonoBehaviour
 
     private void thetaProtocol()
     {
+        stopped = true;
         pause = true;
         seconds = 0;
         counter = 0;
@@ -229,6 +244,31 @@ public class TextBox : MonoBehaviour
         totalProcess = 1;
         rrCounter = 0;
         quantumReset = false;
-        GameObject.Find("manager").GetComponent<ProcessManager>().thetaProtocol();
+        manager.GetComponent<ProcessManager>().thetaProtocol();
+    }
+
+    public void setMemorySize(int n)
+    {
+        if(stopped)
+        {
+            if(!(n < pageSize))
+            {
+                memorySize = n;
+                manager.GetComponent<MemoryManager>().setSize(n);
+            }
+        }
+    }
+
+    public void setPageSize(int n)
+    {
+        if(stopped)
+        {
+            if(!(n > memorySize))
+            {
+                manager.GetComponent<MemoryManager>().setPage(n);
+                pageSize = n;
+                print (pageSize);
+            }
+        }
     }
 }

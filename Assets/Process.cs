@@ -3,7 +3,7 @@ using System.Collections;
 
 public class Process
 {
-	private string name;
+	public string name {get; private set;}
 	public int duration { get; private set;}
     public int staticDuration {get; private set;}
 	public int ioTimer {get; private set;}

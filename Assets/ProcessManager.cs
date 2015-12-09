@@ -14,6 +14,7 @@ public class ProcessManager : MonoBehaviour
 	private Queue<Process> done = new Queue<Process>();
 	private Queue<Process> inIO = new Queue<Process>();
 	private List<Process> everything = new List<Process>();
+    private Queue<Process> waitingMemory = new Queue<Process>();
 
 	//temp process holder
 	private Process holder;
@@ -48,9 +49,13 @@ public class ProcessManager : MonoBehaviour
 	private int waitingLimit;
     private int actualTime = 0;
 
+    //memory part
+    private GameObject memory;
+
 	// Use this for initialization
 	void Start ()
 	{
+        memory = GameObject.Find("manager");
 		//initializes all the texts that will be printed, and assigns them to their text objects
 		newText = GameObject.Find("NewList").GetComponent<Text>();
 		newText.text = "";
@@ -218,8 +223,17 @@ public class ProcessManager : MonoBehaviour
 		{
 			if(inProcess.Count == 0)
 			{
-				inProcess.Enqueue(readyQueue.Dequeue());
-                GameObject.Find("Tick&Quantum").GetComponent<TextBox>().startQuantum();
+                if(memory.GetComponent<MemoryManager>().isActive(readyQueue.Peek().name))
+                {
+                    memory.GetComponent<MemoryManager>().run(readyQueue.Peek().name);
+				    inProcess.Enqueue(readyQueue.Dequeue());
+                    GameObject.Find("Tick&Quantum").GetComponent<TextBox>().startQuantum();
+                }
+                else
+                {
+                    memory.GetComponent<MemoryManager>().swap(readyQueue.Peek().name);
+                    waitingMemory.Enqueue(readyQueue.Dequeue());
+                }
 			}
 		}
     }
@@ -229,12 +243,16 @@ public class ProcessManager : MonoBehaviour
         if(newQueue.Count != 0)
 		{
 			if(!isReadyFull())
+            {
+                memory.GetComponent<MemoryManager>().Activate(newQueue.Peek().name);
 				readyQueue.Enqueue(newQueue.Dequeue());
+            }
 		}
     }
 
 	public void tick(int seconds)
 	{
+        print("this should be first");
         checkIO();
 		checkWaiting();
 		checkProcess(seconds);
@@ -243,6 +261,7 @@ public class ProcessManager : MonoBehaviour
 		canMove = true;
         actualTime = seconds;
 		update = true;
+        memory.GetComponent<MemoryManager>().tick();
 	}
 
 	public void createNewProcess(int duration, int n, int ioTimer, int waitingTime, int arrivalTime)
@@ -255,6 +274,14 @@ public class ProcessManager : MonoBehaviour
 			newQueue.Enqueue(holder);
 		}
 	}
+
+    public void createNewProcessm(int processNumber, int memorySize)
+    {
+        if(!isNewFull())
+        {
+            memory.GetComponent<MemoryManager>().createNewProcess(processNumber,memorySize);
+        }
+    }
 
     private void resetPCB()
     {
@@ -285,7 +312,7 @@ public class ProcessManager : MonoBehaviour
 
         foreach(Process iterator in everything)
         {
-             print("im doing stuff");
+            //print("im doing stuff");
             idText.text = idText.text + iterator.print() + "\n";
             arrivedText.text = arrivedText.text + iterator.arrivalTime + "\n";
             CPUuseText.text = CPUuseText.text + iterator.staticDuration + "\n";
@@ -378,5 +405,6 @@ public class ProcessManager : MonoBehaviour
         update = true;
         canMove = true;
         actualTime = 0;
+        memory.GetComponent<MemoryManager>().thetaProtocol();
     }
 }

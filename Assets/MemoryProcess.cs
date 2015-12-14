@@ -4,9 +4,29 @@ using System.Collections.Generic;
 
 public class MemoryProcess
 {
-    private string name {get;set;}
-    private int size {get;set;}
-    private int pageNumber {get; set;}
+    public string name {get;set;}
+    public int size {get;set;}
+    public int pageNumber{get;set;}
+    private int pagerunning;
+    public int pageRunning
+    {
+        get{return pagerunning;}
+        set
+        {
+            if(pagerunning == value)
+            {
+                if(pagerunning < this.pageNumber)
+                {
+                    pagerunning = value + 1;
+                }
+                else
+                {
+                    pagerunning = value - 1;
+                }
+            }
+        }
+    }
+    public string[] pages{get;set;}
 
     public MemoryProcess()
     {
@@ -15,11 +35,13 @@ public class MemoryProcess
         pageNumber = 1;
     }
 
-    public MemoryProcess(string name, int size)
+    public MemoryProcess(string name, int size, int pageNumber)
     {
         this.name = name;
         this.size = size;
-        pageNumber = 1;
+        this.pageNumber = pageNumber;
+        this.pages = new string[pageNumber];
+        pagerunning = 0;
     }
 
 

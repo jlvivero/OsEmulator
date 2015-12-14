@@ -11,10 +11,20 @@ public class MemoryManager : MonoBehaviour
     private int pageSize = 4;
     private GameObject[,] memoryMap;
     private PageMatrix[,] memoryMapAttributes;
+    private GameObject greenOne;
+    private PageMatrix greenAttribute;
+    private bool mode = false;
+
+    //TAP stuff here
+    //private Text tapTxt;
+    //private GameObject tap;
 
 	// Use this for initialization
 	void Start ()
     {
+        //tap = GameObject.Find("Pages");
+        //tapTxt = GameObject.Find("PagesText").GetComponent<Text>();
+        //tapTxt.text = "";
         memoryMapAttributes = new PageMatrix[8,8];
         initializeMap();
         memoryMap = new GameObject[8,8];
@@ -96,21 +106,51 @@ public class MemoryManager : MonoBehaviour
         for(int i = 0; i < 8; i++)
             for(int j = 0; j < 8; j++)
                 memoryMapAttributes[i,j] = new PageMatrix ();
-        print("finished");
     }
 
     public void createNewProcess(int totalProcess, int memorySize)
     {
-        MemoryProcess temp = new MemoryProcess("P" + totalProcess, memorySize);
+        MemoryProcess temp = new MemoryProcess("P" + totalProcess, memorySize, (memorySize / pageSize));
+        for(int i = 0; i < temp.pageNumber; i++)
+        {
+            temp.pages[i] = "dsk";
+        }
         process.Add(temp);
     }
 
     public void tick()
     {
-        print("this goes next");
+        //print("this goes next");
         //this should add timeinRam to the activated page
-
+        foreach (PageMatrix page in memoryMapAttributes)
+        {
+            page.timeInSystem++;
+        }
+        if(greenAttribute != null)
+        {
+            greenAttribute.timeRunning++;
+        }
+    //    resetTAP();
+    //    printTAP();
     }
+
+    /*private void resetTAP()
+    {
+        tapTxt.text = "";
+    }
+
+    private void printTAP()
+    {
+        foreach(MemoryProcess iterator in process)
+        {
+            tapTxt.text = tapTxt.text + "name: " + iterator.name + "   size: " + iterator.size;
+            for(int i = 0; i < iterator.pageNumber; i++)
+            {
+                tapTxt.text = tapTxt.text + "   pg" + i + ": " + iterator.pages[i];
+            }
+            tapTxt.text = tapTxt + "\n";
+        }
+    }*/
 
     private MemoryProcess search(string name)
     {
@@ -122,12 +162,13 @@ public class MemoryManager : MonoBehaviour
         return null;
     }
 
-    public void Activate(string name)
+    public bool Activate(string name)
     {
         bool done,failed;
         done = true;
         failed = true;
-        if(search(name) != null)
+        MemoryProcess temp = search(name);
+        if(temp != null)
         {
             print(name);
             for(int i = 0; i < 8; i++)
@@ -141,6 +182,10 @@ public class MemoryManager : MonoBehaviour
                         memoryMapAttributes[i,j].hasInfo = true;
                         memoryMap[i,j].transform.GetChild(0).GetComponent<Text>().text = name;
                         memoryMap[i,j].GetComponent<Button>().GetComponent<Image>().color = Color.yellow;
+                        memoryMapAttributes[i,j].timeInSystem = 0;
+                        memoryMapAttributes[i,j].timeRunning = 0;
+                        memoryMapAttributes[i,j].process = temp;
+                        memoryMapAttributes[i,j].process.pages[memoryMapAttributes[i,j].process.pageRunning] = "RAM";
                         done = false;
                         failed = false;
                         break;
@@ -153,10 +198,11 @@ public class MemoryManager : MonoBehaviour
             }
             if(failed)
             {
-                swap(name);
+                return false;
             }
+            return true;
         }
-        //this should activate a page in the memoryMap
+        return false;
     }
 
     public void setPage(int size)
@@ -189,6 +235,8 @@ public class MemoryManager : MonoBehaviour
                     memoryMapAttributes[i,j].isOccupied = true;
                     memoryMapAttributes[i,j].hasInfo = true;
                     memoryMapAttributes[i,j].available = true;
+                    memoryMapAttributes[i,j].processName = "OS";
+                    memoryMap[i,j].transform.GetChild(0).GetComponent<Text>().text = "OS";
                 }
                 else
                 {
@@ -200,6 +248,8 @@ public class MemoryManager : MonoBehaviour
                         memoryMapAttributes[i,j].isOccupied = false;
                         memoryMapAttributes[i,j].available = true;
                         memoryMapAttributes[i,j].hasInfo = false;
+                        memoryMapAttributes[i,j].processName = " ";
+                        memoryMap[i,j].transform.GetChild(0).GetComponent<Text>().text = " ";
                     }
                     else
                     {
@@ -208,6 +258,8 @@ public class MemoryManager : MonoBehaviour
                         memoryMapAttributes[i,j].isOccupied = false;
                         memoryMapAttributes[i,j].available = false;
                         memoryMapAttributes[i,j].hasInfo = false;
+                        memoryMapAttributes[i,j].processName = "N/A";
+                        memoryMap[i,j].transform.GetChild(0).GetComponent<Text>().text = "N/A";
                     }
                 }
             }
@@ -221,8 +273,61 @@ public class MemoryManager : MonoBehaviour
 
     public void swap(string name)
     {
-        //this should do the swapping
-        print(name);
+        if(Activate(name))
+        {
+            return;
+        }
+        int a = -1, b = -1;
+        int time = 0;
+        int used = 9999;
+        if(mode)
+        {
+            for(int i = 0; i < 8; i++)
+            {
+                for(int j = 0; j < 8; j++)
+                {
+                    if((!memoryMapAttributes[i,j].osOccupied) && (memoryMapAttributes[i,j].available) && memoryMapAttributes[i,j].isOccupied && (!memoryMapAttributes[i,j].isRunning))
+                    {
+                        if(memoryMapAttributes[i,j].timeRunning < used)
+                        {
+                            a = i;
+                            b = j;
+                            used = memoryMapAttributes[i,j].timeRunning;
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            //the oldest time in System
+            //if i want to use the least used, i would do the same except use time as the minimum and instead of using time in system id use time running
+            for(int i = 0; i < 8; i++)
+            {
+                for(int j = 0; j < 8; j++)
+                {
+                    if((!memoryMapAttributes[i,j].osOccupied) && (memoryMapAttributes[i,j].available) && memoryMapAttributes[i,j].isOccupied && (!memoryMapAttributes[i,j].isRunning))
+                    {
+                        if(memoryMapAttributes[i,j].timeInSystem > time)
+                        {
+                            a = i;
+                            b = j;
+                            time = memoryMapAttributes[i,j].timeInSystem;
+                        }
+                    }
+                }
+            }
+        }
+        if(a != -1 && b != -1)
+        {
+            memoryMapAttributes[a,b].timeInSystem = 0;
+            memoryMapAttributes[a,b].processName = name;
+            memoryMapAttributes[a,b].timeRunning = 0;
+            memoryMapAttributes[a,b].process.pages[memoryMapAttributes[a,b].process.pageRunning] = "dsk";
+            memoryMap[a,b].transform.GetChild(0).GetComponent<Text>().text = name;
+            memoryMapAttributes[a,b].process = search(name);
+            memoryMapAttributes[a,b].process.pages[memoryMapAttributes[a,b].process.pageRunning] = "RAM";
+        }
     }
 
     public bool isActive(string name)
@@ -254,6 +359,14 @@ public class MemoryManager : MonoBehaviour
                 {
                     if(memoryMapAttributes[i,j].processName.Equals(name))
                     {
+                        if(greenOne != null)
+                        {
+                            greenOne.GetComponent<Button>().GetComponent<Image>().color = Color.yellow;
+                            greenAttribute.isRunning = false;
+                        }
+                        greenOne = memoryMap[i,j];
+                        greenAttribute = memoryMapAttributes[i,j];
+                        greenAttribute.isRunning = true;
                         memoryMap[i,j].GetComponent<Button>().GetComponent<Image>().color = Color.green;
                         memoryMapAttributes[i,j].osOccupied = false;
                         memoryMapAttributes[i,j].isOccupied = true;
@@ -262,6 +375,46 @@ public class MemoryManager : MonoBehaviour
                     }
                 }
             }
+        }
+    }
+
+    public void changeMode(bool val)
+    {
+        mode = val;
+    }
+
+    public void finished(string name)
+    {
+        MemoryProcess temp = search(name);
+        if(temp != null)
+        {
+            temp.name = temp.name + "done";
+            greenOne.GetComponent<Button>().GetComponent<Image>().color = Color.cyan;
+            greenAttribute.isOccupied = false;
+            greenAttribute.available = true;
+            greenOne = null;
+            greenAttribute = null;
+        }
+
+    }
+
+    public void preSwap(string name)
+    {
+        int randomNumber;
+        MemoryProcess temp = search(name);
+        if(temp != null)
+        {
+            greenOne.GetComponent<Button>().GetComponent<Image>().color = Color.cyan;
+            greenAttribute.isOccupied = false;
+            greenAttribute.available = true;
+            randomNumber = ((Func<int>)(() => {
+                    System.Random rnd = new System.Random();
+                    int dice = rnd.Next(0,greenAttribute.process.pageNumber - 1);
+                    return dice;
+                }))();
+            greenAttribute.process.pageRunning = randomNumber;
+            greenOne = null;
+            greenAttribute = null;
         }
     }
 

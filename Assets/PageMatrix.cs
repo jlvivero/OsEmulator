@@ -8,6 +8,10 @@ public class PageMatrix
     public bool hasInfo {get; set;}
     public bool available {get; set;}
     public string processName {get;set;}
+    public int timeInSystem {get;set;}
+    public int timeRunning {get;set;}
+    public bool isRunning {get;set;}
+    public MemoryProcess process {get;set;}
 
     public PageMatrix(){
         processName = "";

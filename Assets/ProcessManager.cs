@@ -15,6 +15,7 @@ public class ProcessManager : MonoBehaviour
 	private Queue<Process> inIO = new Queue<Process>();
 	private List<Process> everything = new List<Process>();
     private Queue<Process> waitingMemory = new Queue<Process>();
+    private Queue<Process> swapping = new Queue<Process>();
 
 	//temp process holder
 	private Process holder;
@@ -26,6 +27,8 @@ public class ProcessManager : MonoBehaviour
 	private Text doneText;
 	private Text waitingText;
 	private Text inIOText;
+    private Text waitingMemoryText;
+    private Text swappingText;
 
     //text for the PCB sadly I don't think I can put it on another file since I need to be able to update the
     //processes as they go
@@ -42,6 +45,9 @@ public class ProcessManager : MonoBehaviour
 	//control variables
 	private bool update = false;
 	private bool canMove = true;
+    private GameObject settings;
+    private int memoryWait = 0;
+    private int swappingWait = 0;
 
 	//limits of the different lists
 	private int newLimit;
@@ -51,11 +57,13 @@ public class ProcessManager : MonoBehaviour
 
     //memory part
     private GameObject memory;
+    int happens;
 
 	// Use this for initialization
 	void Start ()
 	{
         memory = GameObject.Find("manager");
+        settings = GameObject.Find("Tick&Quantum");
 		//initializes all the texts that will be printed, and assigns them to their text objects
 		newText = GameObject.Find("NewList").GetComponent<Text>();
 		newText.text = "";
@@ -74,6 +82,12 @@ public class ProcessManager : MonoBehaviour
 
 		inIOText = GameObject.Find("UsingIOList").GetComponent<Text>();
 		inIOText.text = "";
+
+        waitingMemoryText = GameObject.Find("WaitingMemoryList").GetComponent<Text>();
+        waitingMemoryText.text = "";
+
+        swappingText = GameObject.Find("SwappingList").GetComponent<Text>();
+        swappingText.text = "";
 
         //after this it's the pcb texts
         idText = GameObject.Find("IDInfoText").GetComponent<Text>();
@@ -103,6 +117,8 @@ public class ProcessManager : MonoBehaviour
         waitingTimeText = GameObject.Find("WaitingTimeText").GetComponent<Text>();
         waitingTimeText.text = "";
 
+
+
 	}
 
 	// Update is called once per frame
@@ -122,6 +138,10 @@ public class ProcessManager : MonoBehaviour
 			printQueue(waitingQueue,waitingText);
 			inIOText.text = "";
 			printQueue(inIO,inIOText);
+            waitingMemoryText.text = "";
+            printQueue(waitingMemory,waitingMemoryText);
+            swappingText.text = "";
+            printQueue(swapping,swappingText);
             //this will do the same thing as ^ there, but for all the pcb stuff
             resetPCB();
             printPCB();
@@ -141,7 +161,7 @@ public class ProcessManager : MonoBehaviour
 			canMove = false;
 		readyQueue.Enqueue(inProcess.Dequeue());
 		tick(seconds);
-        GameObject.Find("Tick&Quantum").GetComponent<TextBox>().startQuantum();
+        settings.GetComponent<TextBox>().startQuantum();
 	}
 
     private void checkIO()
@@ -193,6 +213,7 @@ public class ProcessManager : MonoBehaviour
 		{
 			if(inProcess.Peek().isFinished())
 			{
+                memory.GetComponent<MemoryManager>().finished(inProcess.Peek().name);
                 inProcess.Peek().endTime = seconds;
 				done.Enqueue(inProcess.Dequeue());
 			}
@@ -211,7 +232,20 @@ public class ProcessManager : MonoBehaviour
 				}
 				else
                 {
-					inProcess.Peek().timePass();
+                    happens = ((Func<int>)(() => {
+                            System.Random rnd = new System.Random();
+                            int dice = rnd.Next(1,100);
+                            return dice;
+                        }))();
+                    if(happens > 75)
+                    {
+                        memory.GetComponent<MemoryManager>().preSwap(inProcess.Peek().name);
+                        waitingMemory.Enqueue(inProcess.Dequeue());
+                    }
+                    else
+                    {
+					    inProcess.Peek().timePass();
+                    }
                 }
 			}
 		}
@@ -225,13 +259,12 @@ public class ProcessManager : MonoBehaviour
 			{
                 if(memory.GetComponent<MemoryManager>().isActive(readyQueue.Peek().name))
                 {
-                    memory.GetComponent<MemoryManager>().run(readyQueue.Peek().name);
-				    inProcess.Enqueue(readyQueue.Dequeue());
-                    GameObject.Find("Tick&Quantum").GetComponent<TextBox>().startQuantum();
+			        inProcess.Enqueue(readyQueue.Dequeue());
+                    memory.GetComponent<MemoryManager>().run(inProcess.Peek().name);
+                    settings.GetComponent<TextBox>().startQuantum();
                 }
                 else
                 {
-                    memory.GetComponent<MemoryManager>().swap(readyQueue.Peek().name);
                     waitingMemory.Enqueue(readyQueue.Dequeue());
                 }
 			}
@@ -244,16 +277,59 @@ public class ProcessManager : MonoBehaviour
 		{
 			if(!isReadyFull())
             {
-                memory.GetComponent<MemoryManager>().Activate(newQueue.Peek().name);
-				readyQueue.Enqueue(newQueue.Dequeue());
+                if(memory.GetComponent<MemoryManager>().Activate(newQueue.Peek().name))
+                {
+				    readyQueue.Enqueue(newQueue.Dequeue());
+                }
+                else
+                {
+                    waitingMemory.Enqueue(newQueue.Dequeue());
+                }
             }
 		}
     }
 
+    private void checkMemory()
+    {
+        if(waitingMemory.Count != 0)
+        {
+            if(memoryWait > 1)
+            {
+                if(swapping.Count == 0)
+                {
+                    swapping.Enqueue(waitingMemory.Dequeue());
+                    memoryWait = 0;
+                }
+            }
+            else
+            {
+                memoryWait++;
+            }
+        }
+    }
+
+    private void checkSwapping()
+    {
+        if(swapping.Count != 0)
+        {
+            if(swappingWait > 1)
+            {
+                memory.GetComponent<MemoryManager>().swap(swapping.Peek().name);
+                readyQueue.Enqueue(swapping.Dequeue());
+                swappingWait = 0;
+            }
+            else
+            {
+                swappingWait++;
+            }
+        }
+    }
+
 	public void tick(int seconds)
 	{
-        print("this should be first");
         checkIO();
+        checkMemory();
+        checkSwapping();
 		checkWaiting();
 		checkProcess(seconds);
         checkReady();
@@ -402,6 +478,8 @@ public class ProcessManager : MonoBehaviour
         inProcess.Clear();
         done.Clear();
         inIO.Clear();
+        swapping.Clear();
+        waitingMemory.Clear();
         update = true;
         canMove = true;
         actualTime = 0;

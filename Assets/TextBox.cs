@@ -168,7 +168,6 @@ public class TextBox : MonoBehaviour
 	{
         quantumReset = true;
 		rrCounter = 0;
-		print("quantum should start counting");
 	}
 
 	public void setDuration(string durationString)

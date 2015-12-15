@@ -16,15 +16,15 @@ public class MemoryManager : MonoBehaviour
     private bool mode = false;
 
     //TAP stuff here
-    //private Text tapTxt;
+    private Text tap;
+    public GameObject text;
     //private GameObject tap;
 
 	// Use this for initialization
 	void Start ()
     {
-        //tap = GameObject.Find("Pages");
-        //tapTxt = GameObject.Find("PagesText").GetComponent<Text>();
-        //tapTxt.text = "";
+        tap = text.GetComponent<Text>();
+        tap.text = "";
         memoryMapAttributes = new PageMatrix[8,8];
         initializeMap();
         memoryMap = new GameObject[8,8];
@@ -130,27 +130,27 @@ public class MemoryManager : MonoBehaviour
         {
             greenAttribute.timeRunning++;
         }
-    //    resetTAP();
-    //    printTAP();
+        resetTAP();
+        printTAP();
     }
 
-    /*private void resetTAP()
+    private void resetTAP()
     {
-        tapTxt.text = "";
+        tap.text = " ";
     }
 
     private void printTAP()
     {
         foreach(MemoryProcess iterator in process)
         {
-            tapTxt.text = tapTxt.text + "name: " + iterator.name + "   size: " + iterator.size;
+            tap.text = tap.text + "name: " + iterator.name + "   size: " + iterator.size;
             for(int i = 0; i < iterator.pageNumber; i++)
             {
-                tapTxt.text = tapTxt.text + "   pg" + i + ": " + iterator.pages[i];
+                tap.text = tap.text + "   pg" + i + ": " + iterator.pages[i];
             }
-            tapTxt.text = tapTxt + "\n";
+            tap.text = tap.text + "\n";
         }
-    }*/
+    }
 
     private MemoryProcess search(string name)
     {

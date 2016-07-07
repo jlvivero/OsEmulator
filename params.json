@@ -1,0 +1,6 @@
+{
+  "name": "Osemulator",
+  "tagline": "A simple OS emulator done in Unity",
+  "body": "# OsEmulator\r\nA simple OS emulator done in Unity with the new Linux editor  \r\nIt's all done with default UI assets\r\n\r\nIt uses a first come first server algorithm, and the Round robin algorithm.\r\n\r\nThe program is divided into three Panels\r\n- The settings Panel:  \r\n![Settings Panel Picture](http://i.imgur.com/JDJhQQ3.png)  \r\nThis is where you will change the settings of all the process that are created, when you input a number, make sure to press enter after you change a value.  \r\n\r\n- The list Panel:  \r\n![List Panel Picture](http://i.imgur.com/9VFkQtG.png)  \r\nThis Panel just shows you how each process changes state.  \r\n\r\n- The PCB Panel:  \r\n![PCB Panel Picture](http://i.imgur.com/IlOubXF.png)  \r\nThis Panel shows you all the information on each process.  \r\n\r\nNow that you've seen how it works try it out!\r\nJust download the repo, open the project with Unity, wait till it loads and then create the executable from Unity.\r\n",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
